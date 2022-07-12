@@ -1,0 +1,35 @@
+
+
+Breakpoint=E:/RoboMaster2022/Repositories/C Board INS Example/Components/Devices/BMI088driver.c:146:5, State=BP_STATE_DISABLED
+GraphedExpression="(INS).Roll", Color=#a00909
+GraphedExpression="(INS).Pitch", Color=#09a01b
+GraphedExpression="(INS).Yaw", Color=#09a087
+OpenDocument="main.c", FilePath="E:/RoboMaster2022/Repositories/Standard WLIP Infantry C/Src/main.c", Line=48
+OpenToolbar="Debug", Floating=0, x=0, y=0
+OpenWindow="Registers 1", DockArea=RIGHT, x=0, y=0, w=879, h=1840, TabPos=4, TopOfStack=0, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, FilteredItems=[], RefreshRate=1
+OpenWindow="Source Files", DockArea=RIGHT, x=0, y=0, w=879, h=1840, TabPos=0, TopOfStack=0, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Disassembly", DockArea=RIGHT, x=0, y=0, w=879, h=1840, TabPos=3, TopOfStack=0, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Data Sampling", DockArea=LEFT, x=0, y=1, w=1606, h=841, TabPos=1, TopOfStack=1, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, VisibleTab=0, UniformSampleSpacing=0
+OpenWindow="Timeline", DockArea=LEFT, x=0, y=0, w=1606, h=998, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=1, DataPaneShown=1, PowerPaneShown=0, CodePaneShown=0, PinCursor="Cursor Movable", TimePerDiv="1 s / Div", TimeStampFormat="Time", DataGraphDrawAsPoints=0, DataGraphLegendShown=1, DataGraphUniformSampleSpacing=0, DataGraphLegendPosition="66;0", PowerGraphDrawAsPoints=0, PowerGraphLegendShown=0, PowerGraphAvgFilterTime=Off, PowerGraphAvgFilterLen=Off, PowerGraphUniformSampleSpacing=0, PowerGraphLegendPosition="1111;-157", CodeGraphLegendShown=0, CodeGraphLegendPosition="1141;0"
+OpenWindow="Console", DockArea=LEFT, x=0, y=1, w=1606, h=841, TabPos=0, TopOfStack=0, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Watched Data 1", DockArea=RIGHT, x=0, y=0, w=879, h=1840, TabPos=1, TopOfStack=1, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Watched Data 2", DockArea=RIGHT, x=0, y=0, w=879, h=1840, TabPos=2, TopOfStack=0, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+TableHeader="Source Files", SortCol="File", SortOrder="ASCENDING", VisibleCols=["File";"Status";"Size";"#Insts";"Path"], ColWidths=[353;146;118;146;2494]
+TableHeader="Watched Data 1", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh"], ColWidths=[569;250;318;170]
+TableHeader="Watched Data 2", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh"], ColWidths=[397;336;190;170]
+TableHeader="Registers 1", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Description"], ColWidths=[128;105;714]
+TableHeader="Power Sampling", SortCol="Index", SortOrder="ASCENDING", VisibleCols=["Index";"Time";"Ch 0"], ColWidths=[100;100;100]
+TableHeader="RegisterSelectionDialog", SortCol="None", SortOrder="ASCENDING", VisibleCols=[], ColWidths=[]
+TableHeader="Data Sampling Table", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";" (INS).Roll";" (INS).Pitch";" (INS).Yaw"], ColWidths=[100;100;100;100;100]
+TableHeader="Data Sampling Setup", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Type";"Value";"Average";"Min";"Max";"# Changes";"Min. Change";"Max. Change"], ColWidths=[734;142;162;202;122;122;242;282;282]
+WatchedExpression="QEKF_INS", RefreshRate=5, Window=Watched Data 1
+WatchedExpression="IMU_Param", RefreshRate=5, Window=Watched Data 1
+WatchedExpression="BMI088", RefreshRate=1, Window=Watched Data 1
+WatchedExpression="INS", RefreshRate=5, Window=Watched Data 1
+WatchedExpression="ChassisMotorSI", RefreshRate=1, Window=Watched Data 2
+WatchedExpression="refSpeed", Window=Watched Data 2
+WatchedExpression="amp", Window=Watched Data 2
+WatchedExpression="omega", Window=Watched Data 2
+WatchedExpression="offset", Window=Watched Data 2
+WatchedExpression="c0", RefreshRate=1, Window=Watched Data 2
+WatchedExpression="c1", RefreshRate=1, Window=Watched Data 2

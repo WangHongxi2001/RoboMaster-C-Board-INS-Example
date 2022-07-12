@@ -1,0 +1,33 @@
+{
+    "files.associations": {
+        "aimassist_task.h": "c",
+        "bmi088driver.h": "c",
+        "quaternionahrs.h": "c",
+        "shoot_task.h": "c",
+        "gimbal_task.h": "c",
+        "includes.h": "c",
+        "remote_control.h": "c",
+        "detect_task.h": "c",
+        "ins_task.h": "c",
+        "vtm info.h": "c",
+        "system_identification.h": "c",
+        "kalman_filter.h": "c",
+        "arm_math.h": "c",
+        "stm32f407xx.h": "c",
+        "math.h": "c",
+        "serialdebug.h": "c",
+        "quaternionekf.h": "c",
+        "bsp_dwt.h": "c",
+        "control_task.h": "c",
+        "param.h": "c",
+        "estimate_task.h": "c",
+        "robot.h": "c",
+        "leg.h": "c",
+        "plan_task.h": "c",
+        "motor.h": "c",
+        "controller.h": "c",
+        "user_lib.h": "c"
+    },
+    "editor.formatOnPaste": true,
+    "editor.formatOnSave": true
+}
