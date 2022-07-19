@@ -7,32 +7,32 @@
  * @brief   C implementation of kalman filter
  ******************************************************************************
  * @attention
- * ¸Ã¿¨¶ûÂüÂË²¨Æ÷¿ÉÒÔÔÚ´«¸ĞÆ÷²ÉÑùÆµÂÊ²»Í¬µÄÇé¿öÏÂ£¬¶¯Ì¬µ÷Õû¾ØÕóH RºÍKµÄÎ¬ÊıÓëÊıÖµ¡£
+ * è¯¥å¡å°”æ›¼æ»¤æ³¢å™¨å¯ä»¥åœ¨ä¼ æ„Ÿå™¨é‡‡æ ·é¢‘ç‡ä¸åŒçš„æƒ…å†µä¸‹ï¼ŒåŠ¨æ€è°ƒæ•´çŸ©é˜µH Rå’ŒKçš„ç»´æ•°ä¸æ•°å€¼ã€‚
  * This implementation of kalman filter can dynamically adjust dimension and
  * value of matrix H R and K according to the measurement validity under any
  * circumstance that the sampling rate of component sensors are different.
  *
- * Òò´Ë¾ØÕóHºÍRµÄ³õÊ¼»¯»áÓë¾ØÕóP AºÍQÓĞËù²»Í¬¡£ÁíÍâµÄ£¬ÔÚ³õÊ¼»¯Á¿²âÏòÁ¿zÊ±ĞèÒª¶îÍâĞ´
- * Èë´«¸ĞÆ÷Á¿²âËù¶ÔÓ¦µÄ×´Ì¬ÓëÕâ¸öÁ¿²âµÄ·½Ê½£¬ÏêÇéÇë¼ûÀı³Ì
+ * å› æ­¤çŸ©é˜µHå’ŒRçš„åˆå§‹åŒ–ä¼šä¸çŸ©é˜µP Aå’ŒQæœ‰æ‰€ä¸åŒã€‚å¦å¤–çš„ï¼Œåœ¨åˆå§‹åŒ–é‡æµ‹å‘é‡zæ—¶éœ€è¦é¢å¤–å†™
+ * å…¥ä¼ æ„Ÿå™¨é‡æµ‹æ‰€å¯¹åº”çš„çŠ¶æ€ä¸è¿™ä¸ªé‡æµ‹çš„æ–¹å¼ï¼Œè¯¦æƒ…è¯·è§ä¾‹ç¨‹
  * Therefore, the initialization of matrix P, F, and Q is sometimes different
  * from that of matrices H R. when initialization. Additionally, the corresponding
  * state and the method of the measurement should be provided when initializing
  * measurement vector z. For more details, please see the example.
  *
- * Èô²»ĞèÒª¶¯Ì¬µ÷ÕûÁ¿²âÏòÁ¿z£¬¿É¼òµ¥½«½á¹¹ÌåÖĞµÄUse_Auto_Adjustment³õÊ¼»¯Îª0£¬²¢Ïñ³õ
- * Ê¼»¯¾ØÕóPÄÇÑùÓÃ³£¹æ·½Ê½³õÊ¼»¯z H R¼´¿É¡£
+ * è‹¥ä¸éœ€è¦åŠ¨æ€è°ƒæ•´é‡æµ‹å‘é‡zï¼Œå¯ç®€å•å°†ç»“æ„ä½“ä¸­çš„Use_Auto_Adjustmentåˆå§‹åŒ–ä¸º0ï¼Œå¹¶åƒåˆ
+ * å§‹åŒ–çŸ©é˜µPé‚£æ ·ç”¨å¸¸è§„æ–¹å¼åˆå§‹åŒ–z H Rå³å¯ã€‚
  * If automatic adjustment is not required, assign zero to the UseAutoAdjustment
  * and initialize z H R in the normal way as matrix P.
  *
- * ÒªÇóÁ¿²âÏòÁ¿zÓë¿ØÖÆÏòÁ¿uÔÚ´«¸ĞÆ÷»Øµ÷º¯ÊıÖĞ¸üĞÂ¡£ÕûÊı0ÒâÎ¶×ÅÁ¿²âÎŞĞ§£¬¼´×ÔÉÏ´Î¿¨¶ûÂü
- * ÂË²¨¸üĞÂºóÎŞ´«¸ĞÆ÷Êı¾İ¸üĞÂ¡£Òò´ËÁ¿²âÏòÁ¿zÓë¿ØÖÆÏòÁ¿u»áÔÚ¿¨¶ûÂüÂË²¨¸üĞÂ¹ı³ÌÖĞ±»ÇåÁã
+ * è¦æ±‚é‡æµ‹å‘é‡zä¸æ§åˆ¶å‘é‡uåœ¨ä¼ æ„Ÿå™¨å›è°ƒå‡½æ•°ä¸­æ›´æ–°ã€‚æ•´æ•°0æ„å‘³ç€é‡æµ‹æ— æ•ˆï¼Œå³è‡ªä¸Šæ¬¡å¡å°”æ›¼
+ * æ»¤æ³¢æ›´æ–°åæ— ä¼ æ„Ÿå™¨æ•°æ®æ›´æ–°ã€‚å› æ­¤é‡æµ‹å‘é‡zä¸æ§åˆ¶å‘é‡uä¼šåœ¨å¡å°”æ›¼æ»¤æ³¢æ›´æ–°è¿‡ç¨‹ä¸­è¢«æ¸…é›¶
  * MeasuredVector and ControlVector are required to be updated in the sensor
  * callback function. Integer 0 in measurement vector z indicates the invalidity
  * of current measurement, so MeasuredVector and ControlVector will be reset
  * (to 0) during each update.
  *
- * ´ËÍâ£¬¾ØÕóP¹ı¶ÈÊÕÁ²ºóÂË²¨Æ÷½«ÄÑÒÔÔÙÊÊÓ¦×´Ì¬µÄ»ºÂı±ä»¯£¬´Ó¶ø²úÉúÂË²¨¹À¼ÆÆ«²î¡£¸ÃËã·¨
- * Í¨¹ıÏŞÖÆ¾ØÕóP×îĞ¡ÖµµÄ·½·¨£¬¿ÉÓĞĞ§ÒÖÖÆÂË²¨Æ÷µÄ¹ı¶ÈÊÕÁ²£¬ÏêÇéÇë¼ûÀı³Ì¡£
+ * æ­¤å¤–ï¼ŒçŸ©é˜µPè¿‡åº¦æ”¶æ•›åæ»¤æ³¢å™¨å°†éš¾ä»¥å†é€‚åº”çŠ¶æ€çš„ç¼“æ…¢å˜åŒ–ï¼Œä»è€Œäº§ç”Ÿæ»¤æ³¢ä¼°è®¡åå·®ã€‚è¯¥ç®—æ³•
+ * é€šè¿‡é™åˆ¶çŸ©é˜µPæœ€å°å€¼çš„æ–¹æ³•ï¼Œå¯æœ‰æ•ˆæŠ‘åˆ¶æ»¤æ³¢å™¨çš„è¿‡åº¦æ”¶æ•›ï¼Œè¯¦æƒ…è¯·è§ä¾‹ç¨‹ã€‚
  * Additionally, the excessive convergence of matrix P will make filter incapable
  * of adopting the slowly changing state. This implementation can effectively
  * suppress filter excessive convergence through boundary limiting for matrix P.
@@ -67,30 +67,30 @@
  *         0.5*dt*dt,              dt,         1,
  *     };
  *
- *     // ÉèÖÃ×îĞ¡·½²î
+ *     // è®¾ç½®æœ€å°æ–¹å·®
  *     static float state_min_variance[3] = {0.03, 0.005, 0.1};
  *
- *     // ¿ªÆô×Ô¶¯µ÷Õû
+ *     // å¼€å¯è‡ªåŠ¨è°ƒæ•´
  *     Height_KF.UseAutoAdjustment = 1;
  *
- *     // ÆøÑ¹²âµÃ¸ß¶È GPS²âµÃ¸ß¶È ¼ÓËÙ¶È¼Æ²âµÃzÖáÔË¶¯¼ÓËÙ¶È
+ *     // æ°”å‹æµ‹å¾—é«˜åº¦ GPSæµ‹å¾—é«˜åº¦ åŠ é€Ÿåº¦è®¡æµ‹å¾—zè½´è¿åŠ¨åŠ é€Ÿåº¦
  *     static uint8_t measurement_reference[3] = {1, 1, 3}
  *
  *     static float measurement_degree[3] = {1, 1, 1}
- *     // ¸ù¾İmeasurement_referenceÓëmeasurement_degreeÉú³ÉH¾ØÕóÈçÏÂ£¨ÔÚµ±Ç°ÖÜÆÚÈ«²¿²âÁ¿Êı¾İÓĞĞ§Çé¿öÏÂ£©
+ *     // æ ¹æ®measurement_referenceä¸measurement_degreeç”ŸæˆHçŸ©é˜µå¦‚ä¸‹ï¼ˆåœ¨å½“å‰å‘¨æœŸå…¨éƒ¨æµ‹é‡æ•°æ®æœ‰æ•ˆæƒ…å†µä¸‹ï¼‰
  *       |1   0   0|
  *       |1   0   0|
  *       |0   0   1|
  *
  *     static float mat_R_diagonal_elements = {30, 25, 35}
- *     //¸ù¾İmat_R_diagonal_elementsÉú³ÉR¾ØÕóÈçÏÂ£¨ÔÚµ±Ç°ÖÜÆÚÈ«²¿²âÁ¿Êı¾İÓĞĞ§Çé¿öÏÂ£©
+ *     //æ ¹æ®mat_R_diagonal_elementsç”ŸæˆRçŸ©é˜µå¦‚ä¸‹ï¼ˆåœ¨å½“å‰å‘¨æœŸå…¨éƒ¨æµ‹é‡æ•°æ®æœ‰æ•ˆæƒ…å†µä¸‹ï¼‰
  *       |30   0   0|
  *       | 0  25   0|
  *       | 0   0  35|
  *
  *     Kalman_Filter_Init(&Height_KF, 3, 0, 3);
  *
- *     // ÉèÖÃ¾ØÕóÖµ
+ *     // è®¾ç½®çŸ©é˜µå€¼
  *     memcpy(Height_KF.P_data, P_Init, sizeof(P_Init));
  *     memcpy(Height_KF.F_data, F_Init, sizeof(F_Init));
  *     memcpy(Height_KF.Q_data, Q_Init, sizeof(Q_Init));
@@ -102,12 +102,12 @@
  *
  * void INS_Task(void const *pvParameters)
  * {
- *     // Ñ­»·¸üĞÂ
+ *     // å¾ªç¯æ›´æ–°
  *     Kalman_Filter_Update(&Height_KF);
  *     vTaskDelay(ts);
  * }
  *
- * // ²âÁ¿Êı¾İ¸üĞÂÓ¦°´ÕÕÒÔÏÂĞÎÊ½ ¼´ÏòMeasuredVector¸³Öµ
+ * // æµ‹é‡æ•°æ®æ›´æ–°åº”æŒ‰ç…§ä»¥ä¸‹å½¢å¼ å³å‘MeasuredVectorèµ‹å€¼
  * void Barometer_Read_Over(void)
  * {
  *     ......
@@ -132,6 +132,14 @@ uint16_t sizeof_float, sizeof_double;
 
 static void H_K_R_Adjustment(KalmanFilter_t *kf);
 
+/**
+ * @brief åˆå§‹åŒ–çŸ©é˜µç»´åº¦ä¿¡æ¯å¹¶ä¸ºçŸ©é˜µåˆ†é…ç©ºé—´
+ *
+ * @param kf kfç±»å‹å®šä¹‰
+ * @param xhatSize çŠ¶æ€å˜é‡ç»´åº¦
+ * @param uSize æ§åˆ¶å˜é‡ç»´åº¦
+ * @param zSize è§‚æµ‹é‡ç»´åº¦
+ */
 void Kalman_Filter_Init(KalmanFilter_t *kf, uint8_t xhatSize, uint8_t uSize, uint8_t zSize)
 {
     sizeof_float = sizeof(float);
@@ -255,7 +263,7 @@ void Kalman_Filter_Init(KalmanFilter_t *kf, uint8_t xhatSize, uint8_t uSize, uin
 
 void Kalman_Filter_Measure(KalmanFilter_t *kf)
 {
-    // ¾ØÕóH K R¸ù¾İÁ¿²âÇé¿ö×Ô¶¯µ÷Õû
+    // çŸ©é˜µH K Ræ ¹æ®é‡æµ‹æƒ…å†µè‡ªåŠ¨è°ƒæ•´
     // matrix H K R auto adjustment
     if (kf->UseAutoAdjustment != 0)
         H_K_R_Adjustment(kf);
@@ -267,6 +275,7 @@ void Kalman_Filter_Measure(KalmanFilter_t *kf)
 
     memcpy(kf->u_data, kf->ControlVector, sizeof_float * kf->uSize);
 }
+
 void Kalman_Filter_xhatMinusUpdate(KalmanFilter_t *kf)
 {
     if (!kf->SkipEq1)
@@ -287,6 +296,7 @@ void Kalman_Filter_xhatMinusUpdate(KalmanFilter_t *kf)
         }
     }
 }
+
 void Kalman_Filter_PminusUpdate(KalmanFilter_t *kf)
 {
     if (!kf->SkipEq2)
@@ -306,17 +316,17 @@ void Kalman_Filter_SetK(KalmanFilter_t *kf)
         kf->MatStatus = Matrix_Transpose(&kf->H, &kf->HT); // z|x => x|z
         kf->temp_matrix.numRows = kf->H.numRows;
         kf->temp_matrix.numCols = kf->Pminus.numCols;
-        kf->MatStatus = Matrix_Multiply(&kf->H, &kf->Pminus, &kf->temp_matrix); // temp_matrix = H¡¤P'(k)
+        kf->MatStatus = Matrix_Multiply(&kf->H, &kf->Pminus, &kf->temp_matrix); // temp_matrix = HÂ·P'(k)
         kf->temp_matrix1.numRows = kf->temp_matrix.numRows;
         kf->temp_matrix1.numCols = kf->HT.numCols;
-        kf->MatStatus = Matrix_Multiply(&kf->temp_matrix, &kf->HT, &kf->temp_matrix1); // temp_matrix1 = H¡¤P'(k)¡¤HT
+        kf->MatStatus = Matrix_Multiply(&kf->temp_matrix, &kf->HT, &kf->temp_matrix1); // temp_matrix1 = HÂ·P'(k)Â·HT
         kf->S.numRows = kf->R.numRows;
         kf->S.numCols = kf->R.numCols;
         kf->MatStatus = Matrix_Add(&kf->temp_matrix1, &kf->R, &kf->S); // S = H P'(k) HT + R
-        kf->MatStatus = Matrix_Inverse(&kf->S, &kf->temp_matrix1);     // temp_matrix1 = inv(H¡¤P'(k)¡¤HT + R)
+        kf->MatStatus = Matrix_Inverse(&kf->S, &kf->temp_matrix1);     // temp_matrix1 = inv(HÂ·P'(k)Â·HT + R)
         kf->temp_matrix.numRows = kf->Pminus.numRows;
         kf->temp_matrix.numCols = kf->HT.numCols;
-        kf->MatStatus = Matrix_Multiply(&kf->Pminus, &kf->HT, &kf->temp_matrix); // temp_matrix = P'(k)¡¤HT
+        kf->MatStatus = Matrix_Multiply(&kf->Pminus, &kf->HT, &kf->temp_matrix); // temp_matrix = P'(k)Â·HT
         kf->MatStatus = Matrix_Multiply(&kf->temp_matrix, &kf->temp_matrix1, &kf->K);
     }
 }
@@ -329,10 +339,10 @@ void Kalman_Filter_xhatUpdate(KalmanFilter_t *kf)
         kf->MatStatus = Matrix_Multiply(&kf->H, &kf->xhatminus, &kf->temp_vector); // temp_vector = H xhat'(k)
         kf->temp_vector1.numRows = kf->z.numRows;
         kf->temp_vector1.numCols = 1;
-        kf->MatStatus = Matrix_Subtract(&kf->z, &kf->temp_vector, &kf->temp_vector1); // temp_vector1 = z(k) - H¡¤xhat'(k)
+        kf->MatStatus = Matrix_Subtract(&kf->z, &kf->temp_vector, &kf->temp_vector1); // temp_vector1 = z(k) - HÂ·xhat'(k)
         kf->temp_vector.numRows = kf->K.numRows;
         kf->temp_vector.numCols = 1;
-        kf->MatStatus = Matrix_Multiply(&kf->K, &kf->temp_vector1, &kf->temp_vector); // temp_vector = K(k)¡¤(z(k) - H¡¤xhat'(k))
+        kf->MatStatus = Matrix_Multiply(&kf->K, &kf->temp_vector1, &kf->temp_vector); // temp_vector = K(k)Â·(z(k) - HÂ·xhat'(k))
         kf->MatStatus = Matrix_Add(&kf->xhatminus, &kf->temp_vector, &kf->xhat);
     }
 }
@@ -344,63 +354,71 @@ void Kalman_Filter_P_Update(KalmanFilter_t *kf)
         kf->temp_matrix.numCols = kf->H.numCols;
         kf->temp_matrix1.numRows = kf->temp_matrix.numRows;
         kf->temp_matrix1.numCols = kf->Pminus.numCols;
-        kf->MatStatus = Matrix_Multiply(&kf->K, &kf->H, &kf->temp_matrix);                 // temp_matrix = K(k)¡¤H
-        kf->MatStatus = Matrix_Multiply(&kf->temp_matrix, &kf->Pminus, &kf->temp_matrix1); // temp_matrix1 = K(k)¡¤H¡¤P'(k)
+        kf->MatStatus = Matrix_Multiply(&kf->K, &kf->H, &kf->temp_matrix);                 // temp_matrix = K(k)Â·H
+        kf->MatStatus = Matrix_Multiply(&kf->temp_matrix, &kf->Pminus, &kf->temp_matrix1); // temp_matrix1 = K(k)Â·HÂ·P'(k)
         kf->MatStatus = Matrix_Subtract(&kf->Pminus, &kf->temp_matrix1, &kf->P);
     }
 }
 
+/**
+ * @brief æ‰§è¡Œå¡å°”æ›¼æ»¤æ³¢é»„é‡‘äº”å¼,æä¾›äº†ç”¨æˆ·å®šä¹‰å‡½æ•°,å¯ä»¥æ›¿ä»£äº”ä¸ªä¸­çš„ä»»æ„ä¸€ä¸ªç¯èŠ‚,æ–¹ä¾¿è‡ªè¡Œæ‰©å±•ä¸ºEKF/UKF/ESKF/AUKFç­‰
+ * 
+ * @param kf kfç±»å‹å®šä¹‰
+ * @return float* è¿”å›æ»¤æ³¢å€¼
+ */
 float *Kalman_Filter_Update(KalmanFilter_t *kf)
 {
+    // 0. è·å–é‡æµ‹ä¿¡æ¯
     Kalman_Filter_Measure(kf);
-
     if (kf->User_Func0_f != NULL)
         kf->User_Func0_f(kf);
 
-    // 1. xhat'(k)= A¡¤xhat(k-1) + B¡¤u
+    // å…ˆéªŒä¼°è®¡
+    // 1. xhat'(k)= AÂ·xhat(k-1) + BÂ·u
     Kalman_Filter_xhatMinusUpdate(kf);
-
     if (kf->User_Func1_f != NULL)
         kf->User_Func1_f(kf);
 
-    // Ô¤²â¸üĞÂ
-    // 2. P'(k) = A¡¤P(k-1)¡¤AT + Q
+    // é¢„æµ‹æ›´æ–°
+    // 2. P'(k) = AÂ·P(k-1)Â·AT + Q
     Kalman_Filter_PminusUpdate(kf);
-
     if (kf->User_Func2_f != NULL)
         kf->User_Func2_f(kf);
 
     if (kf->MeasurementValidNum != 0 || kf->UseAutoAdjustment == 0)
     {
-        // Á¿²â¸üĞÂ
-        // 3. K(k) = P'(k)¡¤HT / (H¡¤P'(k)¡¤HT + R)
+        // é‡æµ‹æ›´æ–°
+        // 3. K(k) = P'(k)Â·HT / (HÂ·P'(k)Â·HT + R)
         Kalman_Filter_SetK(kf);
 
         if (kf->User_Func3_f != NULL)
             kf->User_Func3_f(kf);
 
-        // 4. xhat(k) = xhat'(k) + K(k)¡¤(z(k) - H¡¤xhat'(k))
+        // èåˆ
+        // 4. xhat(k) = xhat'(k) + K(k)Â·(z(k) - HÂ·xhat'(k))
         Kalman_Filter_xhatUpdate(kf);
 
         if (kf->User_Func4_f != NULL)
             kf->User_Func4_f(kf);
 
-        // 5. P(k) = (1-K(k)¡¤H)¡¤P'(k) ==> P(k) = P'(k)-K(k)¡¤H¡¤P'(k)
+        // ä¿®æ­£æ–¹å·®
+        // 5. P(k) = (1-K(k)Â·H)Â·P'(k) ==> P(k) = P'(k)-K(k)Â·HÂ·P'(k)
         Kalman_Filter_P_Update(kf);
     }
     else
     {
-        // ÎŞÓĞĞ§Á¿²â ½öÔ¤²â
+        // æ— æœ‰æ•ˆé‡æµ‹,ä»…é¢„æµ‹
         // xhat(k) = xhat'(k)
         // P(k) = P'(k)
         memcpy(kf->xhat_data, kf->xhatminus_data, sizeof_float * kf->xhatSize);
         memcpy(kf->P_data, kf->Pminus_data, sizeof_float * kf->xhatSize * kf->xhatSize);
     }
 
+    // è‡ªå®šä¹‰å‡½æ•°,å¯ä»¥æä¾›åå¤„ç†ç­‰
     if (kf->User_Func5_f != NULL)
         kf->User_Func5_f(kf);
 
-    // ±ÜÃâÂË²¨Æ÷¹ı¶ÈÊÕÁ²
+    // é¿å…æ»¤æ³¢å™¨è¿‡åº¦æ”¶æ•›
     // suppress filter excessive convergence
     for (uint8_t i = 0; i < kf->xhatSize; i++)
     {
@@ -423,7 +441,7 @@ static void H_K_R_Adjustment(KalmanFilter_t *kf)
     memcpy(kf->z_data, kf->MeasuredVector, sizeof_float * kf->zSize);
     memset(kf->MeasuredVector, 0, sizeof_float * kf->zSize);
 
-    // Ê¶±ğÁ¿²âÊı¾İÓĞĞ§ĞÔ²¢µ÷Õû¾ØÕóH R K
+    // è¯†åˆ«é‡æµ‹æ•°æ®æœ‰æ•ˆæ€§å¹¶è°ƒæ•´çŸ©é˜µH R K
     // recognize measurement validity and adjust matrices H R K
     memset(kf->R_data, 0, sizeof_float * kf->zSize * kf->zSize);
     memset(kf->H_data, 0, sizeof_float * kf->xhatSize * kf->zSize);
@@ -431,11 +449,11 @@ static void H_K_R_Adjustment(KalmanFilter_t *kf)
     {
         if (kf->z_data[i] != 0)
         {
-            // ÖØ¹¹ÏòÁ¿z
+            // é‡æ„å‘é‡z
             // rebuild vector z
             kf->z_data[kf->MeasurementValidNum] = kf->z_data[i];
             kf->temp[kf->MeasurementValidNum] = i;
-            // ÖØ¹¹¾ØÕóH
+            // é‡æ„çŸ©é˜µH
             // rebuild matrix H
             kf->H_data[kf->xhatSize * kf->MeasurementValidNum + kf->MeasurementMap[i] - 1] = kf->MeasurementDegree[i];
             kf->MeasurementValidNum++;
@@ -443,12 +461,12 @@ static void H_K_R_Adjustment(KalmanFilter_t *kf)
     }
     for (uint8_t i = 0; i < kf->MeasurementValidNum; i++)
     {
-        // ÖØ¹¹¾ØÕóR
+        // é‡æ„çŸ©é˜µR
         // rebuild matrix R
         kf->R_data[i * kf->MeasurementValidNum + i] = kf->MatR_DiagonalElements[kf->temp[i]];
     }
 
-    // µ÷Õû¾ØÕóÎ¬Êı
+    // è°ƒæ•´çŸ©é˜µç»´æ•°
     // adjust the dimensions of system matrices
     kf->H.numRows = kf->MeasurementValidNum;
     kf->H.numCols = kf->xhatSize;

@@ -58,13 +58,16 @@ typedef struct kf_t
     uint8_t UseAutoAdjustment;
     uint8_t MeasurementValidNum;
 
-    uint8_t *MeasurementMap;      // ������״̬�Ĺ�ϵ how measurement relates to the state
-    float *MeasurementDegree;     // ����ֵ��ӦH����Ԫ��ֵ elements of each measurement in H
-    float *MatR_DiagonalElements; // ���ⷽ�� variance for each measurement
-    float *StateMinVariance;      // ��С���� ���ⷽ��������� suppress filter excessive convergence
+    uint8_t *MeasurementMap;      // 量测与状态的关系 how measurement relates to the state
+    float *MeasurementDegree;     // 测量值对应H矩阵元素值 elements of each measurement in H
+    float *MatR_DiagonalElements; // 量测方差 variance for each measurement
+    float *StateMinVariance;      // 最小方差 避免方差过度收敛 suppress filter excessive convergence
     uint8_t *temp;
+
+    // 配合用户定义函数使用,作为标志位用于判断是否要跳过标准KF中五个环节中的任意一个
     uint8_t SkipEq1, SkipEq2, SkipEq3, SkipEq4, SkipEq5;
 
+    // definiion of struct mat: rows & cols & pointer to vars
     mat xhat;      // x(k|k)
     mat xhatminus; // x(k|k-1)
     mat u;         // control vector u
@@ -81,6 +84,7 @@ typedef struct kf_t
 
     int8_t MatStatus;
 
+    // 用户定义函数,可以替换或扩展基准KF的功能
     void (*User_Func0_f)(struct kf_t *kf);
     void (*User_Func1_f)(struct kf_t *kf);
     void (*User_Func2_f)(struct kf_t *kf);
@@ -88,7 +92,8 @@ typedef struct kf_t
     void (*User_Func4_f)(struct kf_t *kf);
     void (*User_Func5_f)(struct kf_t *kf);
     void (*User_Func6_f)(struct kf_t *kf);
-
+    
+    // 矩阵存储空间指针
     float *xhat_data, *xhatminus_data;
     float *u_data;
     float *z_data;
@@ -101,7 +106,9 @@ typedef struct kf_t
     float *K_data;
     float *S_data, *temp_matrix_data, *temp_matrix_data1, *temp_vector_data, *temp_vector_data1;
 } KalmanFilter_t;
+
 extern uint16_t sizeof_float, sizeof_double;
+
 void Kalman_Filter_Init(KalmanFilter_t *kf, uint8_t xhatSize, uint8_t uSize, uint8_t zSize);
 void Kalman_Filter_Measure(KalmanFilter_t *kf);
 void Kalman_Filter_xhatMinusUpdate(KalmanFilter_t *kf);

@@ -66,24 +66,34 @@ void INS_Task(void)
         INS.Gyro[X] = BMI088.Gyro[X];
         INS.Gyro[Y] = BMI088.Gyro[Y];
         INS.Gyro[Z] = BMI088.Gyro[Z];
+
+        // demo function,用于修正安装误差,可以不管,本demo暂时没用
         IMU_Param_Correction(&IMU_Param, INS.Gyro, INS.Accel);
+
+        // 计算重力加速度矢量和b系的XY两轴的夹角,可用作功能扩展,本demo暂时没用
         INS.atanxz = -atan2f(INS.Accel[X], INS.Accel[Z]) * 180 / PI;
         INS.atanyz = atan2f(INS.Accel[Y], INS.Accel[Z]) * 180 / PI;
 
+        // 核心函数,EKF更新四元数
         IMU_QuaternionEKF_Update(INS.Gyro[X], INS.Gyro[Y], INS.Gyro[Z], INS.Accel[X], INS.Accel[Y], INS.Accel[Z], dt);
 
         memcpy(INS.q, QEKF_INS.q, sizeof(QEKF_INS.q));
 
+        // 机体系基向量转换到导航坐标系，本例选取惯性系为导航系
         BodyFrameToEarthFrame(xb, INS.xn, INS.q);
         BodyFrameToEarthFrame(yb, INS.yn, INS.q);
         BodyFrameToEarthFrame(zb, INS.zn, INS.q);
 
+        // 将重力从导航坐标系n转换到机体系b,随后根据加速度计数据计算运动加速度
         float gravity_b[3];
         EarthFrameToBodyFrame(gravity, gravity_b, INS.q);
-        for (uint8_t i = 0; i < 3; i++)
+        for (uint8_t i = 0; i < 3; i++) // 同样过一个低通滤波
+        {
             INS.MotionAccel_b[i] = (INS.Accel[i] - gravity_b[i]) * dt / (INS.AccelLPF + dt) + INS.MotionAccel_b[i] * INS.AccelLPF / (INS.AccelLPF + dt);
-        BodyFrameToEarthFrame(INS.MotionAccel_b, INS.MotionAccel_n, INS.q);
+        }
+        BodyFrameToEarthFrame(INS.MotionAccel_b, INS.MotionAccel_n, INS.q); // 转换回导航系n
 
+        // 获取最终数据
         INS.Yaw = QEKF_INS.Yaw;
         INS.Pitch = QEKF_INS.Pitch;
         INS.Roll = QEKF_INS.Roll;
@@ -105,55 +115,6 @@ void INS_Task(void)
     count++;
 }
 
-/**
- * @brief        Update quaternion
- */
-void QuaternionUpdate(float *q, float gx, float gy, float gz, float dt)
-{
-    float qa, qb, qc;
-
-    gx *= 0.5f * dt;
-    gy *= 0.5f * dt;
-    gz *= 0.5f * dt;
-    qa = q[0];
-    qb = q[1];
-    qc = q[2];
-    q[0] += (-qb * gx - qc * gy - q[3] * gz);
-    q[1] += (qa * gx + qc * gz - q[3] * gy);
-    q[2] += (qa * gy - qb * gz + q[3] * gx);
-    q[3] += (qa * gz + qb * gy - qc * gx);
-}
-
-/**
- * @brief        Convert quaternion to eular angle
- */
-void QuaternionToEularAngle(float *q, float *Yaw, float *Pitch, float *Roll)
-{
-    *Yaw = atan2f(2.0f * (q[0] * q[3] + q[1] * q[2]), 2.0f * (q[0] * q[0] + q[1] * q[1]) - 1.0f) * 57.295779513f;
-    *Pitch = atan2f(2.0f * (q[0] * q[1] + q[2] * q[3]), 2.0f * (q[0] * q[0] + q[3] * q[3]) - 1.0f) * 57.295779513f;
-    *Roll = asinf(2.0f * (q[0] * q[2] - q[1] * q[3])) * 57.295779513f;
-}
-
-/**
- * @brief        Convert eular angle to quaternion
- */
-void EularAngleToQuaternion(float Yaw, float Pitch, float Roll, float *q)
-{
-    float cosPitch, cosYaw, cosRoll, sinPitch, sinYaw, sinRoll;
-    Yaw /= 57.295779513f;
-    Pitch /= 57.295779513f;
-    Roll /= 57.295779513f;
-    cosPitch = arm_cos_f32(Pitch / 2);
-    cosYaw = arm_cos_f32(Yaw / 2);
-    cosRoll = arm_cos_f32(Roll / 2);
-    sinPitch = arm_sin_f32(Pitch / 2);
-    sinYaw = arm_sin_f32(Yaw / 2);
-    sinRoll = arm_sin_f32(Roll / 2);
-    q[0] = cosPitch * cosRoll * cosYaw + sinPitch * sinRoll * sinYaw;
-    q[1] = sinPitch * cosRoll * cosYaw - cosPitch * sinRoll * sinYaw;
-    q[2] = sinPitch * cosRoll * sinYaw + cosPitch * sinRoll * cosYaw;
-    q[3] = cosPitch * cosRoll * sinYaw - sinPitch * sinRoll * cosYaw;
-}
 
 /**
  * @brief          Transform 3dvector from BodyFrame to EarthFrame
@@ -197,6 +158,14 @@ void EarthFrameToBodyFrame(const float *vecEF, float *vecBF, float *q)
                        (0.5f - q[1] * q[1] - q[2] * q[2]) * vecEF[2]);
 }
 
+/**
+ * @brief reserved.用于修正IMU安装误差与标度因数误差,即陀螺仪轴和云台轴的安装偏移
+ *
+ *
+ * @param param IMU参数
+ * @param gyro  角速度
+ * @param accel 加速度
+ */
 static void IMU_Param_Correction(IMU_Param_t *param, float gyro[3], float accel[3])
 {
     static float lastYawOffset, lastPitchOffset, lastRollOffset;
@@ -259,9 +228,67 @@ static void IMU_Param_Correction(IMU_Param_t *param, float gyro[3], float accel[
     lastRollOffset = param->Roll;
 }
 
+/**
+ * @brief 温度控制
+ * 
+ */
 void IMU_Temperature_Ctrl(void)
 {
     PID_Calculate(&TempCtrl, BMI088.Temperature, RefTemp);
 
     TIM_Set_PWM(&htim10, TIM_CHANNEL_1, float_constrain(float_rounding(TempCtrl.Output), 0, UINT32_MAX));
+}
+
+//------------------------------------functions below are not used in this demo-------------------------------------------------
+//----------------------------------you can read them for learning or programming-----------------------------------------------
+//----------------------------------they could also be helpful for further design-----------------------------------------------
+
+/**
+ * @brief        Update quaternion
+ */
+void QuaternionUpdate(float *q, float gx, float gy, float gz, float dt)
+{
+    float qa, qb, qc;
+
+    gx *= 0.5f * dt;
+    gy *= 0.5f * dt;
+    gz *= 0.5f * dt;
+    qa = q[0];
+    qb = q[1];
+    qc = q[2];
+    q[0] += (-qb * gx - qc * gy - q[3] * gz);
+    q[1] += (qa * gx + qc * gz - q[3] * gy);
+    q[2] += (qa * gy - qb * gz + q[3] * gx);
+    q[3] += (qa * gz + qb * gy - qc * gx);
+}
+
+/**
+ * @brief        Convert quaternion to eular angle
+ */
+void QuaternionToEularAngle(float *q, float *Yaw, float *Pitch, float *Roll)
+{
+    *Yaw = atan2f(2.0f * (q[0] * q[3] + q[1] * q[2]), 2.0f * (q[0] * q[0] + q[1] * q[1]) - 1.0f) * 57.295779513f;
+    *Pitch = atan2f(2.0f * (q[0] * q[1] + q[2] * q[3]), 2.0f * (q[0] * q[0] + q[3] * q[3]) - 1.0f) * 57.295779513f;
+    *Roll = asinf(2.0f * (q[0] * q[2] - q[1] * q[3])) * 57.295779513f;
+}
+
+/**
+ * @brief        Convert eular angle to quaternion
+ */
+void EularAngleToQuaternion(float Yaw, float Pitch, float Roll, float *q)
+{
+    float cosPitch, cosYaw, cosRoll, sinPitch, sinYaw, sinRoll;
+    Yaw /= 57.295779513f;
+    Pitch /= 57.295779513f;
+    Roll /= 57.295779513f;
+    cosPitch = arm_cos_f32(Pitch / 2);
+    cosYaw = arm_cos_f32(Yaw / 2);
+    cosRoll = arm_cos_f32(Roll / 2);
+    sinPitch = arm_sin_f32(Pitch / 2);
+    sinYaw = arm_sin_f32(Yaw / 2);
+    sinRoll = arm_sin_f32(Roll / 2);
+    q[0] = cosPitch * cosRoll * cosYaw + sinPitch * sinRoll * sinYaw;
+    q[1] = sinPitch * cosRoll * cosYaw - cosPitch * sinRoll * sinYaw;
+    q[2] = sinPitch * cosRoll * sinYaw + cosPitch * sinRoll * cosYaw;
+    q[3] = cosPitch * cosRoll * sinYaw - sinPitch * sinRoll * cosYaw;
 }
