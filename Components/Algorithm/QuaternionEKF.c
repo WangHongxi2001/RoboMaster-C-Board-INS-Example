@@ -222,7 +222,7 @@ void IMU_QuaternionEKF_Update(float gx, float gy, float gz, float ax, float ay, 
  * @brief 用于更新线性化后的状态转移矩阵F右上角的一个4x2分块矩阵,稍后用于协方差矩阵P的更新;
  *        并对零漂的方差进行限制,防止过度收敛并限幅防止发散
  *
- * @param kf kf类型定义
+ * @param kf
  */
 static void IMU_QuaternionEKF_F_Linearization_P_Fading(KalmanFilter_t *kf)
 {
@@ -279,7 +279,7 @@ static void IMU_QuaternionEKF_F_Linearization_P_Fading(KalmanFilter_t *kf)
 /**
  * @brief 在工作点处计算观测函数h(x)的Jacobi矩阵H
  *
- * @param kf kf类型定义
+ * @param kf
  */
 static void IMU_QuaternionEKF_SetH(KalmanFilter_t *kf)
 {
@@ -319,7 +319,7 @@ static void IMU_QuaternionEKF_SetH(KalmanFilter_t *kf)
  *        加入了卡方检验以判断融合加速度的条件是否满足
  *        同时引入发散保护保证恶劣工况下的必要量测更新
  *
- * @param kf kf类型定义
+ * @param kf
  */
 static void IMU_QuaternionEKF_xhatUpdate(KalmanFilter_t *kf)
 {
@@ -371,7 +371,7 @@ static void IMU_QuaternionEKF_xhatUpdate(KalmanFilter_t *kf)
     kf->temp_matrix.numCols = 1;
     kf->MatStatus = Matrix_Multiply(&kf->temp_vector, &kf->temp_vector1, &kf->temp_matrix);
 
-    QEKF_INS.ChiSquare = kf->temp_matrix.pData[0]; //ekT*Dk-1*ek , scalar
+    QEKF_INS.ChiSquare = kf->temp_matrix.pData[0]; //e(k)'*inv(D(k))*e(k) , scalar
     // rk is small,filter converged/converging
     if (QEKF_INS.ChiSquare < 0.5f * QEKF_INS.ChiSquareTestThreshold)
     {
@@ -460,7 +460,7 @@ static void IMU_QuaternionEKF_xhatUpdate(KalmanFilter_t *kf)
         }
     }
 
-    // 不矫正yaw轴数据
+    // 不修正yaw轴数据
     kf->temp_vector.pData[3] = 0;
     kf->MatStatus = Matrix_Add(&kf->xhatminus, &kf->temp_vector, &kf->xhat);
 }
