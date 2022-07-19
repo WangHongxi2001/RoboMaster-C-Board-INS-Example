@@ -79,19 +79,19 @@ void INS_Task(void)
 
         memcpy(INS.q, QEKF_INS.q, sizeof(QEKF_INS.q));
 
-        // 转换到大地/绝对坐标系
+        // 机体系基向量转换到导航坐标系，本例选取惯性系为导航系
         BodyFrameToEarthFrame(xb, INS.xn, INS.q);
         BodyFrameToEarthFrame(yb, INS.yn, INS.q);
         BodyFrameToEarthFrame(zb, INS.zn, INS.q);
 
-        // 将重力从绝对坐标系n转换到机体系b,随后根据加速度计数据计算运动加速度
+        // 将重力从导航坐标系n转换到机体系b,随后根据加速度计数据计算运动加速度
         float gravity_b[3];
         EarthFrameToBodyFrame(gravity, gravity_b, INS.q);
         for (uint8_t i = 0; i < 3; i++) // 同样过一个低通滤波
         {
             INS.MotionAccel_b[i] = (INS.Accel[i] - gravity_b[i]) * dt / (INS.AccelLPF + dt) + INS.MotionAccel_b[i] * INS.AccelLPF / (INS.AccelLPF + dt);
         }
-        BodyFrameToEarthFrame(INS.MotionAccel_b, INS.MotionAccel_n, INS.q); // 转换回绝对系n
+        BodyFrameToEarthFrame(INS.MotionAccel_b, INS.MotionAccel_n, INS.q); // 转换回导航系n
 
         // 获取最终数据
         INS.Yaw = QEKF_INS.Yaw;
@@ -159,12 +159,12 @@ void EarthFrameToBodyFrame(const float *vecEF, float *vecBF, float *q)
 }
 
 /**
- * @brief reserved.用于修正IMU安装误差,即陀螺仪轴和云台轴的offset
+ * @brief reserved.用于修正IMU安装误差与标度因数误差,即陀螺仪轴和云台轴的安装偏移
  *
  *
- * @param param 有误差的机体位姿
- * @param gyro  角速度,稍后修正并转换到绝对系
- * @param accel 加速度,稍后修正并转换到绝对系
+ * @param param IMU参数
+ * @param gyro  角速度
+ * @param accel 加速度
  */
 static void IMU_Param_Correction(IMU_Param_t *param, float gyro[3], float accel[3])
 {
@@ -172,7 +172,6 @@ static void IMU_Param_Correction(IMU_Param_t *param, float gyro[3], float accel[
     static float c_11, c_12, c_13, c_21, c_22, c_23, c_31, c_32, c_33;
     float cosPitch, cosYaw, cosRoll, sinPitch, sinYaw, sinRoll;
 
-    // 当初始化即flag==true或IMU相对云台机械位置等出现大的位移/姿态变化的时更新(如变形/伸展等)
     if (fabsf(param->Yaw - lastYawOffset) > 0.001f ||
         fabsf(param->Pitch - lastPitchOffset) > 0.001f ||
         fabsf(param->Roll - lastRollOffset) > 0.001f || param->flag)
@@ -199,7 +198,7 @@ static void IMU_Param_Correction(IMU_Param_t *param, float gyro[3], float accel[
     float gyro_temp[3];
     for (uint8_t i = 0; i < 3; i++)
         gyro_temp[i] = gyro[i] * param->scale[i];
-    // 计算b系下的角速度在n系下的投影
+
     gyro[X] = c_11 * gyro_temp[X] +
               c_12 * gyro_temp[Y] +
               c_13 * gyro_temp[Z];
@@ -213,7 +212,7 @@ static void IMU_Param_Correction(IMU_Param_t *param, float gyro[3], float accel[
     float accel_temp[3];
     for (uint8_t i = 0; i < 3; i++)
         accel_temp[i] = accel[i];
-    // 计算b系下的加速度在n系下的投影
+
     accel[X] = c_11 * accel_temp[X] +
                c_12 * accel_temp[Y] +
                c_13 * accel_temp[Z];
@@ -223,7 +222,7 @@ static void IMU_Param_Correction(IMU_Param_t *param, float gyro[3], float accel[
     accel[Z] = c_31 * accel_temp[X] +
                c_32 * accel_temp[Y] +
                c_33 * accel_temp[Z];
-    // 更新offset
+
     lastYawOffset = param->Yaw;
     lastPitchOffset = param->Pitch;
     lastRollOffset = param->Roll;
