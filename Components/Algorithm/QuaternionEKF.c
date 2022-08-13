@@ -52,7 +52,7 @@ void IMU_QuaternionEKF_Init(float process_noise1, float process_noise2, float me
     QEKF_INS.Q1 = process_noise1;
     QEKF_INS.Q2 = process_noise2;
     QEKF_INS.R = measure_noise;
-    QEKF_INS.ChiSquareTestThreshold = 0.1;
+    QEKF_INS.ChiSquareTestThreshold = 1e-8;
     QEKF_INS.ConvergeFlag = 0;
     QEKF_INS.ErrorCount = 0;
     QEKF_INS.UpdateCount = 0;
@@ -65,6 +65,7 @@ void IMU_QuaternionEKF_Init(float process_noise1, float process_noise2, float me
 
     // 初始化矩阵维度信息
     Kalman_Filter_Init(&QEKF_INS.IMU_QuaternionEKF, 6, 0, 3);
+    Matrix_Init(&QEKF_INS.ChiSquare, 1, 1, (float *)QEKF_INS.ChiSquare_Data);
 
     // 姿态初始化
     QEKF_INS.IMU_QuaternionEKF.xhat_data[0] = 1;
@@ -102,7 +103,7 @@ void IMU_QuaternionEKF_Update(float gx, float gy, float gz, float ax, float ay, 
         IMU_QuaternionEKF_Init(10, 0.001, 1000000 * 10, 0.9996 * 0 + 1, 0);
     }
 
-    /*   F, number with * represent vals to be set 
+    /*   F, number with * represent vals to be set
      0      1*     2*     3*     4     5
      6*     7      8*     9*    10    11
     12*    13*    14     15*    16    17
@@ -300,7 +301,7 @@ static void IMU_QuaternionEKF_SetH(KalmanFilter_t *kf)
 
     kf->H_data[0] = -doubleq2;
     kf->H_data[1] = doubleq3;
-    kf->H_data[2] = -doubleq0; 
+    kf->H_data[2] = -doubleq0;
     kf->H_data[3] = doubleq1;
 
     kf->H_data[6] = doubleq1;
@@ -367,18 +368,14 @@ static void IMU_QuaternionEKF_xhatUpdate(KalmanFilter_t *kf)
     kf->temp_vector.numRows = 1;
     kf->temp_vector.numCols = kf->temp_vector1.numRows;
     kf->MatStatus = Matrix_Transpose(&kf->temp_vector1, &kf->temp_vector); // temp_vector = z(k) - h(xhat'(k))'
-    kf->temp_matrix.numRows = 1;
-    kf->temp_matrix.numCols = 1;
-    kf->MatStatus = Matrix_Multiply(&kf->temp_vector, &kf->temp_vector1, &kf->temp_matrix);
-
-    QEKF_INS.ChiSquare = kf->temp_matrix.pData[0]; //e(k)'*inv(D(k))*e(k) , scalar
+    kf->MatStatus = Matrix_Multiply(&kf->temp_vector, &kf->temp_matrix, &QEKF_INS.ChiSquare);
     // rk is small,filter converged/converging
-    if (QEKF_INS.ChiSquare < 0.5f * QEKF_INS.ChiSquareTestThreshold)
+    if (QEKF_INS.ChiSquare_Data[0] < 0.5f * QEKF_INS.ChiSquareTestThreshold)
     {
         QEKF_INS.ConvergeFlag = 1;
     }
     // rk is bigger than thre but once converged
-    if (QEKF_INS.ChiSquare > QEKF_INS.ChiSquareTestThreshold && QEKF_INS.ConvergeFlag)
+    if (QEKF_INS.ChiSquare_Data[0] > QEKF_INS.ChiSquareTestThreshold && QEKF_INS.ConvergeFlag)
     {
         if (QEKF_INS.StableFlag)
         {
@@ -392,7 +389,7 @@ static void IMU_QuaternionEKF_xhatUpdate(KalmanFilter_t *kf)
         if (QEKF_INS.ErrorCount > 50)
         {
             // 滤波器发散
-            QEKF_INS.ConvergeFlag = 0; 
+            QEKF_INS.ConvergeFlag = 0;
             kf->SkipEq5 = FALSE; // step-5 is cov mat P updating
         }
         else
@@ -409,9 +406,9 @@ static void IMU_QuaternionEKF_xhatUpdate(KalmanFilter_t *kf)
     else // if divergent or rk is not that big/acceptable,use adaptive gain
     {
         // scale adaptive,rk越小则增益越大,否则更相信预测值
-        if (QEKF_INS.ChiSquare > 0.1f * QEKF_INS.ChiSquareTestThreshold && QEKF_INS.ConvergeFlag)
+        if (QEKF_INS.ChiSquare_Data[0] > 0.1f * QEKF_INS.ChiSquareTestThreshold && QEKF_INS.ConvergeFlag)
         {
-            QEKF_INS.AdaptiveGainScale = (QEKF_INS.ChiSquareTestThreshold - QEKF_INS.ChiSquare) / (0.9f * QEKF_INS.ChiSquareTestThreshold);
+            QEKF_INS.AdaptiveGainScale = (QEKF_INS.ChiSquareTestThreshold - QEKF_INS.ChiSquare_Data[0]) / (0.9f * QEKF_INS.ChiSquareTestThreshold);
         }
         else
         {
